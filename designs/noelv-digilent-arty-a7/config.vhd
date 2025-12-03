@@ -109,7 +109,7 @@ package config is
 -- GPIO port
   constant CFG_GRGPIO_ENABLE : integer := 1;
   constant CFG_GRGPIO_IMASK : integer := 16#FFFE#;
-  constant CFG_GRGPIO_WIDTH : integer := (20);
+  constant CFG_GRGPIO_WIDTH : integer := (32);
 -- Spacewire interface
   constant CFG_SPWRTR_ENABLE : integer := 0;
   constant CFG_SPWRTR_INPUT : integer := 2;

@@ -69,6 +69,8 @@ entity noelvmp is
     CLK100MHZ          : in    std_ulogic;
     -- LEDs. 0: off, 1: on
     led                : out   std_logic_vector(3 downto 0);
+    -- Arty A7 RGB leds
+    ledrgb             : out   std_logic_vector(11 downto 0);
     -- Buttons 0: not pressed, 1: pressed
     btn                : in    std_logic_vector(3 downto 0);
     -- Switches
@@ -626,6 +628,12 @@ begin
         generic map (tech => padtech, level => cmos, voltage => x18v)
         port map (led(i), gpio_o(i+16));
     end generate gpled_pads;
+
+    gpledrgb_pads : for i in 0 to 11 generate
+      gpledrgb_pad : outpad
+        generic map (tech => padtech, level => cmos, voltage => x18v)
+        port map (ledrgb(i), gpio_o(i+20));
+    end generate gpledrgb_pads;
 
     gpsw_pads : for i in 0 to 2 generate
       gpsw_pad : inpad
