@@ -1403,7 +1403,9 @@ vivado-launch: vivado/$(TOP)_vivado.tcl $(VHDLSYNFILES) $(VERILOGSYNFILES)
 	fi;
 
 vivado: vivado/$(TOP)_vivado.tcl $(VHDLSYNFILES) $(VERILOGSYNFILES)
-	set -o pipefail && vivado -mode batch -source ./vivado/$(TOP)_vivado.tcl ./vivado/$(TOP)_vivado_run.tcl | tee -i $(TOP)_vivado.log
+	set -o pipefail && \
+	 LD_PRELOAD=/lib/x86_64-linux-gnu/libudev.so.1 \
+	 vivado -mode batch -source ./vivado/$(TOP)_vivado.tcl ./vivado/$(TOP)_vivado_run.tcl | tee -i $(TOP)_vivado.log
 	@if test -r ./vivado/$(DESIGN)/$(DESIGN).runs/impl_1/$(TOP).bit; then \
 	  cp ./vivado/$(DESIGN)/$(DESIGN).runs/impl_1/$(TOP).bit . ; \
 	  cp ./vivado/$(DESIGN)/$(DESIGN).runs/impl_1/$(TOP).msk . ; \
