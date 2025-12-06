@@ -33,7 +33,6 @@ DEVICE=$(PART)$(PACKAGE)-$(SPEED)
 XDC  =
 XDC += $(BASE_DIR)/zedboard.xdc
 XDC += $(BASE_DIR)/noelvmp_jtag.xdc
-
 TCL= $(BASE_DIR)/wrapper.tcl
 
 ############  Project  ########################
@@ -106,6 +105,8 @@ LIBSKIP += spansion
 LIBSKIP += gsi
 LIBSKIP += micron
 LIBSKIP += cypress
+LIBSKIP += leon3v3
+LIBSKIP += leon5v0
 
 DIRSKIP = b1553 pci/pcif leon2 leon2ft crypto satcan pci leon3ft ambatest can \
 	usb grusbhc ascs slink hcan \
@@ -118,7 +119,25 @@ FILESKIP += grcan.vhd
 FILESKIP += adapters/sgmii.vhd
 FILESKIP += adapters/rgmii_series7.vhd
 
-### Regenerate AHBROM #################################################
+### Local targets #################################################
+
+all: help-local
+
+help-local: help
+	@echo
+	@echo " -----------------------------------------------------------------------------------------"
+	@echo " design specific targets:"
+	@echo
+	@echo "  make program-zedboard			: Load Noelv Design and start clocks using XSDB"
+	@echo "  make ahbrom_gen			: Regenerate ABHROM"
+	@echo
+
+program-zedboard:
+	xsdb program_zedboard.tcl
+
+vivslack: vivado/$(DESIGN)/$(DESIGN).runs/impl_1/$(TOP)_routed.dcp
+	vivado -mode tcl -nojournal -log slack.log -source slack.tcl $<
+
 
 ahbrom_gen: prom.exe
 	make ahbrom.vhd
@@ -135,15 +154,3 @@ include $(GRLIB)/software/noelv/systest/Makefile
 OBJCOPY_CMD = $(OBJCOPY)
 
 include $(GRLIB)/bin/Makefile
-
-##################  project specific targets ##########################
-
-vivprog:
-	vivado -mode tcl -source bitfile/doprog.tcl
-
-vivrom:
-	vivado -mode tcl -source bitfile/dorom.tcl
-
-vivslack: vivado/$(DESIGN)/$(DESIGN).runs/impl_1/$(TOP)_routed.dcp
-	vivado -mode tcl -nojournal -log slack.log -source slack.tcl $<
-
