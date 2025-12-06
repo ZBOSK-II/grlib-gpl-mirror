@@ -23,24 +23,18 @@ endif
 
 ############  Board Setup  ########################
 
-#PART=XC7A35TI
-PART=XC7A100TI
-BOARD=digilent-arty-a7
-DESIGN=noelv-digilent-arty-a7
+BOARD=digilent-zedboard-xc7z020
+DESIGN=noelv-zedboard-xc7z020
 BOARDDIR=$(GRLIB)/boards/$(BOARD)
 include $(BOARDDIR)/Makefile.inc
 
 MGCPART=$(PART)$(PACKAGE)
-DEVICE=$(PART)-$(PACKAGE)$(SPEED)
+DEVICE=$(PART)$(PACKAGE)-$(SPEED)
 XDC  =
-XDC += $(BOARDDIR)/Arty-$(PART).xdc
-XDC += $(BOARDDIR)/voltage_config.xdc
-XDC += $(BOARDDIR)/mig-$(PART)/mig-$(PART).xdc
+XDC += $(BASE_DIR)/zedboard.xdc
 XDC += $(BASE_DIR)/noelvmp_jtag.xdc
 
-#SDCFILE=$(BOARDDIR)/default.sdc
-FDCFILE=$(BOARDDIR)/default.fdc
-BITGEN=$(BOARDDIR)/default.ut
+TCL= $(BASE_DIR)/wrapper.tcl
 
 ############  Project  ########################
 
@@ -70,22 +64,6 @@ ifeq ($(CONFIG_GRETH_ENABLE),y)
 VSIMOPT+= -L secureip -L unisims_ver -L unisim 
 endif
 
-# - MIG -
-ifeq ($(CONFIG_MIG_7SERIES),y)
-VIVADO_MIG_AXI=1
-AXI_128=1
-ifndef CONFIG_MIG_7SERIES_MODEL
-VSIMOPT+= -t fs -voptargs="+acc" 
-VSIMOPT+= -L secureip_ver -L xilinxcorelib_ver -L unisims_ver glbl
-VSIMOPT+= -gUSE_MIG_INTERFACE_MODEL=false
-else
-VSIMOPT+= -gUSE_MIG_INTERFACE_MODEL=true -t ps
-GHDLRUNOPT+= -gUSE_MIG_INTERFACE_MODEL=true
-endif
-endif
-# GHDL does not like the unisim clkgen for some reason
-GHDLRUNOPT+= -gclktech=0
-
 # Simulator switches
 ifeq ("$(GRLIB_SIMULATOR)","ALDEC")
 VSIMOPT+= +access +w -voptargs="+acc" +notimingchecks
@@ -105,9 +83,6 @@ VSIMOPT+= $(SIMTOP)
 ### Testbench, design and libraries to compile and not to compile
 
 VHDLSYNFILES  =
-VHDLSYNFILES += $(BASE_DIR)/rtl/axi_mig3_7series.vhd
-VHDLSYNFILES += $(BOARDDIR)/ahb2axi_mig3_arty_a7.vhd
-VHDLSYNFILES += $(BASE_DIR)/rtl/clockers_mig.vhd
 VHDLSYNFILES += $(CFG_DIR)/config.vhd
 VHDLSYNFILES += $(CFG_LOCAL_DIR)/config_local.vhd
 VHDLSYNFILES += $(CORE_DIR)/rev.vhd
