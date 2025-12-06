@@ -242,6 +242,51 @@ architecture rtl of noelvmp is
   signal dmbreak        : std_logic;
   signal dmreset        : std_logic;
   signal cpu0errn       : std_logic;
+
+  -- Internal signals for AXI GP0 interface
+  signal S_AXI_GP0_araddr   : std_logic_vector(31 downto 0);
+  signal S_AXI_GP0_arburst  : std_logic_vector(1 downto 0);
+  signal S_AXI_GP0_arcache  : std_logic_vector(3 downto 0);
+  signal S_AXI_GP0_arid     : std_logic_vector(5 downto 0);
+  signal S_AXI_GP0_arlen    : std_logic_vector(3 downto 0);
+  signal S_AXI_GP0_arlock   : std_logic_vector(1 downto 0);
+  signal S_AXI_GP0_arprot   : std_logic_vector(2 downto 0);
+  signal S_AXI_GP0_arqos    : std_logic_vector(3 downto 0);
+  signal S_AXI_GP0_arready  : std_logic;
+  signal S_AXI_GP0_arsize   : std_logic_vector(2 downto 0);
+  signal S_AXI_GP0_arvalid  : std_logic;
+  
+  signal S_AXI_GP0_awaddr   : std_logic_vector(31 downto 0);
+  signal S_AXI_GP0_awburst  : std_logic_vector(1 downto 0);
+  signal S_AXI_GP0_awcache  : std_logic_vector(3 downto 0);
+  signal S_AXI_GP0_awid     : std_logic_vector(5 downto 0);
+  signal S_AXI_GP0_awlen    : std_logic_vector(3 downto 0);
+  signal S_AXI_GP0_awlock   : std_logic_vector(1 downto 0);
+  signal S_AXI_GP0_awprot   : std_logic_vector(2 downto 0);
+  signal S_AXI_GP0_awqos    : std_logic_vector(3 downto 0);
+  signal S_AXI_GP0_awready  : std_logic;
+  signal S_AXI_GP0_awsize   : std_logic_vector(2 downto 0);
+  signal S_AXI_GP0_awvalid  : std_logic;
+  
+  signal S_AXI_GP0_bid      : std_logic_vector(5 downto 0);
+  signal S_AXI_GP0_bready   : std_logic;
+  signal S_AXI_GP0_bresp    : std_logic_vector(1 downto 0);
+  signal S_AXI_GP0_bvalid   : std_logic;
+  
+  signal S_AXI_GP0_rdata    : std_logic_vector(31 downto 0);
+  signal S_AXI_GP0_rid      : std_logic_vector(5 downto 0);
+  signal S_AXI_GP0_rlast    : std_logic;
+  signal S_AXI_GP0_rready   : std_logic;
+  signal S_AXI_GP0_rresp    : std_logic_vector(1 downto 0);
+  signal S_AXI_GP0_rvalid   : std_logic;
+  
+  signal S_AXI_GP0_wdata    : std_logic_vector(31 downto 0);
+  signal S_AXI_GP0_wid      : std_logic_vector(5 downto 0);
+  signal S_AXI_GP0_wlast    : std_logic;
+  signal S_AXI_GP0_wready   : std_logic;
+  signal S_AXI_GP0_wstrb    : std_logic_vector(3 downto 0);
+  signal S_AXI_GP0_wvalid   : std_logic;
+
 begin
 
   ----------------------------------------------------------------------
