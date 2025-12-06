@@ -38,7 +38,7 @@ package config is
 -- The value here sets the width of the AMBA AHB data vectors for all
 -- cores in the library.
 --
-constant CFG_AHBDW     : integer := 128;
+constant CFG_AHBDW     : integer := 32;
 
 
 -- CFG_AHB_ACDM - Enable AMBA Compliant Data Muxing in cores

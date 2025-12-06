@@ -44,7 +44,7 @@
 #undef  CONFIG_SYN_TM65GPLUS
 #undef  CONFIG_SYN_TSMC90
 #undef  CONFIG_SYN_UMC
-#define CONFIG_SYN_ARTIX7 1
+#undef  CONFIG_SYN_ARTIX7
 #undef  CONFIG_SYN_KINTEX7
 #undef  CONFIG_SYN_KINTEXU
 #undef  CONFIG_SYN_SPARTAN3
@@ -55,7 +55,7 @@
 #undef  CONFIG_SYN_VIRTEX5
 #undef  CONFIG_SYN_VIRTEX6
 #undef  CONFIG_SYN_VIRTEX7
-#undef  CONFIG_SYN_ZYNQ7000
+#define CONFIG_SYN_ZYNQ7000 1
 #undef  CONFIG_SYN_INFER_RAM
 #undef  CONFIG_SYN_INFER_PADS
 #undef  CONFIG_SYN_NO_ASYNC
@@ -108,11 +108,11 @@
 /*
  * VHDL debug settings       
  */
-#undef  CONFIG_IU_DISAS
+#define CONFIG_IU_DISAS 1
 /*
  * NOEL-V subsystem GPL settings       
  */
-#define CONFIG_PROC_NODBUS 1
+#undef  CONFIG_PROC_NODBUS
 /*
  * L2 Cache
  */
@@ -144,7 +144,7 @@
 #define CONFIG_L2_EDAC_NONE 1
 #undef  CONFIG_L2_EDAC_YES
 #undef  CONFIG_L2_EDAC_TECHSPEC
-#undef  CONFIG_L2_AXI
+#define CONFIG_L2_AXI 1
 /*
  * AMBA configuration
  */
@@ -161,17 +161,6 @@
  */
 #define CONFIG_DSU_UART 1
 #define CONFIG_DSU_JTAG 1
-#define CONFIG_DSU_ETH 1
-#undef  CONFIG_DSU_ETHSZ1
-#define CONFIG_DSU_ETHSZ2 1
-#undef  CONFIG_DSU_ETHSZ4
-#undef  CONFIG_DSU_ETHSZ8
-#undef  CONFIG_DSU_ETHSZ16
-#define CONFIG_DSU_IPMSB C0A8
-#define CONFIG_DSU_IPLSB 0033
-#define CONFIG_DSU_ETHMSB 020000
-#define CONFIG_DSU_ETHLSB 000000
-#undef  CONFIG_DSU_ETH_PROG
 /*
  * Peripherals             
  */
@@ -181,8 +170,8 @@
 /*
  * MIG 7-Series memory controller   
  */
-#define CONFIG_MIG_7SERIES 1
-#define CONFIG_MIG_7SERIES_MODEL 1
+#undef  CONFIG_MIG_7SERIES
+#undef  CONFIG_MIG_7SERIES_MODEL
 #define CONFIG_AHBSTAT_ENABLE 1
 #define CONFIG_AHBSTAT_NFTSLV (1)
 /*
@@ -192,20 +181,12 @@
 /*
  * Ethernet             
  */
-#define CONFIG_GRETH_ENABLE 1
-#undef  CONFIG_GRETH_GIGA
-#undef  CONFIG_GRETH_FIFO4
-#define CONFIG_GRETH_FIFO8 1
-#undef  CONFIG_GRETH_FIFO16
-#undef  CONFIG_GRETH_FIFO32
-#undef  CONFIG_GRETH_FIFO64
-#undef  CONFIG_GRETH_FMC_MODE
-#define CONFIG_GRETH_PHY_ADDR (1)
+#undef  CONFIG_GRETH_ENABLE
 /*
  * UARTs, timers and irq control         
  */
 #define CONFIG_GRGPIO_ENABLE 1
-#define CONFIG_GRGPIO_WIDTH (20)
+#define CONFIG_GRGPIO_WIDTH (24)
 #define CONFIG_GRGPIO_IMASK FFFE
 /*
  * SPW
