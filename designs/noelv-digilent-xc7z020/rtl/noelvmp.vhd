@@ -71,6 +71,8 @@ entity noelvmp is
     btn                : in    std_logic_vector(3 downto 0);
     -- Switches
     sw                 : in    std_logic_vector(3 downto 0);
+    -- PMOD-JB
+    pmod_jb            : inout std_logic_vector(7 downto 0);
     -- PMOD-JA
     ja                 : inout std_logic_vector(7 downto 0);
     -- USB-RS232 interface
@@ -589,6 +591,13 @@ begin
       generic map (tech => padtech, level => cmos, voltage => x18v)
       port map (led(i), gpio_o(i+16));
   end generate gpled_pads;
+
+  -- PMOD JB
+   pmod_jb_pads : for i in 0 to 7 generate
+      pmod_jb_gpio_pad : iopad
+	generic map (tech => padtech, level => cmos, voltage => x33v) -- , strength => 8)
+        port map (pmod_jb(i), gpio_o(i+24), gpio_oe(i+24), gpio_i(i+24));
+    end generate;
 
   end generate;
 
