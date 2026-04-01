@@ -73,6 +73,8 @@ entity noelvmp is
     sw                 : in    std_logic_vector(3 downto 0);
     -- PMOD-JB
     pmod_jb            : inout std_logic_vector(7 downto 0);
+    -- PMOD-JC
+    pmod_jc            : in std_logic_vector(1 downto 0);
     -- PMOD-JA
     ja                 : inout std_logic_vector(7 downto 0);
     -- USB-RS232 interface
@@ -129,6 +131,8 @@ architecture rtl of noelvmp is
     DDR_we_n : inout STD_LOGIC;
     FCLK_CLK0 : out STD_LOGIC;
     FCLK_CLK1 : out STD_LOGIC;
+    COUNTER_EN : in STD_LOGIC;
+    COUNTER_RSTN : in STD_LOGIC;
     FCLK_RESET0_N : out STD_LOGIC;
     FIXED_IO_ddr_vrn : inout STD_LOGIC;
     FIXED_IO_ddr_vrp : inout STD_LOGIC;
@@ -191,6 +195,8 @@ architecture rtl of noelvmp is
   signal gnd            : std_ulogic;
   signal stati          : ahbstat_in_type;
 
+  signal counter_en     : std_logic;
+  signal counter_rstn   : std_logic;
   -- Clock & Reset
   signal rstn           : std_ulogic;
   signal resetn         : std_ulogic;
@@ -323,6 +329,8 @@ begin
       DDR_dqs_n                     => ddr3_dqs_n,
       FCLK_CLK0                     => clkm,
       FCLK_RESET0_N                 => resetn,
+      COUNTER_EN                    => counter_en,
+      COUNTER_RSTN                  => counter_rstn,
       FIXED_IO_mio                  => ps_mio,
       FIXED_IO_ps_srstb             => ps_srstb,
       FIXED_IO_ps_clk               => ps_clk,
@@ -506,7 +514,7 @@ begin
   sw3_pad : inpad
     generic map (tech => padtech, level => cmos, voltage => x12v)
     port map (sw(3), dsu_sel);
-
+  
   uart_tx_int     <= duart_tx       when dsu_sel = '1' else uart_tx(0);
   uart_rtsn_int   <= '1'            when dsu_sel = '1' else uart_rtsn(0);  
   uart_rx(0)      <= uart_rx_int    when dsu_sel = '0' else '1';
@@ -598,9 +606,15 @@ begin
 	generic map (tech => padtech, level => cmos, voltage => x33v) -- , strength => 8)
         port map (pmod_jb(i), gpio_o(i+24), gpio_oe(i+24), gpio_i(i+24));
     end generate;
-
+  
+    -- PMOD JC
+  pmod_jc_pad0 : inpad
+    generic map (tech => padtech, level => cmos, voltage => x33v)
+    port map (pmod_jc(0), counter_en);
+  pmod_jc_pad1 : inpad
+    generic map (tech => padtech, level => cmos, voltage => x33v)
+    port map (pmod_jc(1), counter_rstn);
   end generate;
-
 
 -----------------------------------------------------------------------
 -- RISC-V JTAG
