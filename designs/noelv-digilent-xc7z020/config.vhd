@@ -101,7 +101,7 @@ package config is
   constant CFG_NFC2_TAG_SIZE : integer := 0;
   constant CFG_NFC2_FT : integer := 0;
 -- Gaisler Ethernet core
-  constant CFG_GRETH : integer := 0;
+  constant CFG_GRETH : integer := 1;
   constant CFG_GRETH1G : integer := 0;
   constant CFG_ETH_FIFO : integer := 8;
   constant CFG_GRETH_FMC : integer := 0;
