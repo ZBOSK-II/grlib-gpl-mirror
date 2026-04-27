@@ -607,13 +607,9 @@ begin
         port map (pmod_jb(i), gpio_o(i+24), gpio_oe(i+24), gpio_i(i+24));
     end generate;
   
-    -- PMOD JC
-  pmod_jc_pad0 : inpad
-    generic map (tech => padtech, level => cmos, voltage => x33v)
-    port map (pmod_jc(0), counter_en);
-  pmod_jc_pad1 : inpad
-    generic map (tech => padtech, level => cmos, voltage => x33v)
-    port map (pmod_jc(1), counter_rstn);
+  counter_en <= gpio_o(24);
+  counter_rstn <= gpio_o(25);
+
   end generate;
 
 -----------------------------------------------------------------------
