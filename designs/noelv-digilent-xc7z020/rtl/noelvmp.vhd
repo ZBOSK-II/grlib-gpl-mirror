@@ -177,7 +177,7 @@ architecture rtl of noelvmp is
     );
   end component;
 
-  constant BOARD_FREQ : integer := 100000;  -- CLK input frequency in KHz
+  constant BOARD_FREQ : integer := 40000;  -- CLK input frequency in KHz
   -- cpu frequency in KHz
   constant CPU_FREQ : integer := BOARD_FREQ * CFG_CLKMUL / CFG_CLKDIV;
 
@@ -298,8 +298,6 @@ begin
   gnd         <= '0';
   lock        <= '1';
 
-  -- TODO: reset button
-
   ----------------------------------------------------------------------
   ---  Zedboard PS -----------------------------------------------------
   ----------------------------------------------------------------------
@@ -322,7 +320,9 @@ begin
       DDR_dqs_p                     => ddr3_dqs_p,
       DDR_dqs_n                     => ddr3_dqs_n,
       FCLK_CLK0                     => clkm,
-      FCLK_RESET0_N                 => resetn,
+      RESET                         => resetn,
+      COUNTER_EN                    => counter_en,
+      COUNTER_RSTN                  => counter_rstn,
       FIXED_IO_mio                  => ps_mio,
       FIXED_IO_ps_srstb             => ps_srstb,
       FIXED_IO_ps_clk               => ps_clk,

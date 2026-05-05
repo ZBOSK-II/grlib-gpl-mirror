@@ -105,16 +105,63 @@ proc create_root_design { parentCell } {
   set DDR [ create_bd_intf_port -mode Master -vlnv xilinx.com:interface:ddrx_rtl:1.0 DDR ]
   set FIXED_IO [ create_bd_intf_port -mode Master -vlnv xilinx.com:display_processing_system7:fixedio_rtl:1.0 FIXED_IO ]
   set S_AXI_GP0 [ create_bd_intf_port -mode Slave -vlnv xilinx.com:interface:aximm_rtl:1.0 S_AXI_GP0 ]
-  set_property -dict [ list CONFIG.ADDR_WIDTH {32} CONFIG.ARUSER_WIDTH {0} CONFIG.AWUSER_WIDTH {0} CONFIG.BUSER_WIDTH {0} CONFIG.CLK_DOMAIN {} CONFIG.DATA_WIDTH {32} CONFIG.FREQ_HZ {100000000} CONFIG.ID_WIDTH {6} CONFIG.MAX_BURST_LENGTH {16} CONFIG.NUM_READ_OUTSTANDING {1} CONFIG.NUM_WRITE_OUTSTANDING {1} CONFIG.PHASE {0.000} CONFIG.PROTOCOL {AXI3} CONFIG.READ_WRITE_MODE {READ_WRITE} CONFIG.RUSER_WIDTH {0} CONFIG.SUPPORTS_NARROW_BURST {1} CONFIG.WUSER_WIDTH {0}  ] $S_AXI_GP0
+  set_property -dict [ list CONFIG.ADDR_WIDTH {32} CONFIG.ARUSER_WIDTH {0} CONFIG.AWUSER_WIDTH {0} CONFIG.BUSER_WIDTH {0} CONFIG.CLK_DOMAIN {} CONFIG.DATA_WIDTH {32} CONFIG.FREQ_HZ {40000000} CONFIG.ID_WIDTH {6} CONFIG.MAX_BURST_LENGTH {16} CONFIG.NUM_READ_OUTSTANDING {1} CONFIG.NUM_WRITE_OUTSTANDING {1} CONFIG.PHASE {0.000} CONFIG.PROTOCOL {AXI3} CONFIG.READ_WRITE_MODE {READ_WRITE} CONFIG.RUSER_WIDTH {0} CONFIG.SUPPORTS_NARROW_BURST {1} CONFIG.WUSER_WIDTH {0}  ] $S_AXI_GP0
 
   # Create ports
   set FCLK_CLK0 [ create_bd_port -dir O -type clk FCLK_CLK0 ]
   set FCLK_CLK1 [ create_bd_port -dir O -type clk FCLK_CLK1 ]
-  set FCLK_RESET0_N [ create_bd_port -dir O -type rst FCLK_RESET0_N ]
+  set RESETN    [ create_bd_port -dir O -type rst RESETN ]
+  set COUNTER_EN [ create_bd_port -dir I COUNTER_EN ]
+  set COUNTER_RSTN [ create_bd_port -dir I COUNTER_RSTN ]
 
   # Create instance: processing_system7_0, and set properties
   set processing_system7_0 [ create_bd_cell -type ip -vlnv xilinx.com:ip:processing_system7:5.5 processing_system7_0 ]
-  set_property -dict [ list CONFIG.PCW_EN_CLK1_PORT {1} CONFIG.PCW_FPGA0_PERIPHERAL_FREQMHZ {100.000000} CONFIG.PCW_FPGA1_PERIPHERAL_FREQMHZ {200.000000} CONFIG.PCW_M_AXI_GP1_ENABLE_STATIC_REMAP {0} CONFIG.PCW_TTC0_PERIPHERAL_ENABLE {0} CONFIG.PCW_USE_M_AXI_GP0 {0} CONFIG.PCW_USE_M_AXI_GP1 {0} CONFIG.PCW_USE_S_AXI_ACP {0} CONFIG.PCW_USE_S_AXI_GP0 {1} CONFIG.PCW_USE_S_AXI_GP1 {0} CONFIG.PCW_USE_S_AXI_HP0 {0} CONFIG.preset {ZedBoard*}  ] $processing_system7_0
+  set_property -dict [ list CONFIG.PCW_EN_CLK1_PORT {1} CONFIG.PCW_FPGA0_PERIPHERAL_FREQMHZ {40.000000} CONFIG.PCW_FPGA1_PERIPHERAL_FREQMHZ {200.000000} CONFIG.PCW_M_AXI_GP1_ENABLE_STATIC_REMAP {0} CONFIG.PCW_TTC0_PERIPHERAL_ENABLE {0} CONFIG.PCW_USE_M_AXI_GP0 {1} CONFIG.PCW_USE_M_AXI_GP1 {0} CONFIG.PCW_USE_S_AXI_ACP {0} CONFIG.PCW_USE_S_AXI_GP0 {1} CONFIG.PCW_USE_S_AXI_GP1 {0} CONFIG.PCW_USE_S_AXI_HP0 {0} CONFIG.preset {ZedBoard*}  ] $processing_system7_0
+  
+  # Connect axi counter
+  # AXI interconnect
+  set axi_ic [create_bd_cell -type ip -vlnv xilinx.com:ip:axi_interconnect:2.1 axi_ic_0]
+  set_property -dict [list CONFIG.NUM_MI {1} CONFIG.NUM_SI {1}] $axi_ic
+
+  connect_bd_intf_net [get_bd_intf_pins processing_system7_0/M_AXI_GP0] \
+                    [get_bd_intf_pins axi_ic_0/S00_AXI]
+  
+  connect_bd_intf_net [get_bd_intf_pins axi_ic_0/M00_AXI] \
+                    [get_bd_intf_pins axi_counter_0/s00_axi]
+  
+  # Proc Sys Reset
+  set rst [create_bd_cell -type ip -vlnv xilinx.com:ip:proc_sys_reset:5.0 proc_sys_reset_0]
+  connect_bd_net \
+  [get_bd_pins processing_system7_0/FCLK_CLK0] \
+  [get_bd_pins proc_sys_reset_0/slowest_sync_clk]
+
+  connect_bd_net \
+  [get_bd_pins processing_system7_0/FCLK_RESET0_N] \
+  [get_bd_pins proc_sys_reset_0/ext_reset_in]
+  
+  # Clock/reset
+  connect_bd_net \
+  [get_bd_pins proc_sys_reset_0/interconnect_aresetn] \
+  [get_bd_pins axi_ic_0/ARESETN]
+
+  connect_bd_net \
+  [get_bd_pins proc_sys_reset_0/peripheral_aresetn] \
+  [get_bd_pins axi_counter_0/s00_axi_aresetn] \
+  [get_bd_pins axi_ic_0/S00_ARESETN] \
+  [get_bd_pins axi_ic_0/M00_ARESETN]
+
+  connect_bd_net [get_bd_pins processing_system7_0/FCLK_CLK0] \
+               [get_bd_pins axi_ic_0/ACLK] \
+               [get_bd_pins axi_ic_0/S00_ACLK] \
+               [get_bd_pins axi_ic_0/M00_ACLK] \
+               [get_bd_pins axi_counter_0/s00_axi_aclk]
+
+
+  ## connect to out ports
+  connect_bd_net -net axi_counter_0_COUNTER_EN [get_bd_ports COUNTER_EN] [get_bd_pins axi_counter_0/enable_counter]
+  connect_bd_net -net axi_counter_0_COUNTER_RSTN [get_bd_ports COUNTER_RSTN] [get_bd_pins axi_counter_0/resetn_counter]
+  ## create axi memory mapping
+  create_bd_addr_seg -range 0x10000 -offset 0x43c00000 [get_bd_addr_spaces processing_system7_0/Data] [get_bd_addr_segs axi_counter_0/s00_axi/reg0] SEG_axi_counter
 
   # Create interface connections
   connect_bd_intf_net -intf_net S_AXI_GP0_1 [get_bd_intf_ports S_AXI_GP0] [get_bd_intf_pins processing_system7_0/S_AXI_GP0]
@@ -124,7 +171,7 @@ proc create_root_design { parentCell } {
   # Create port connections
   connect_bd_net -net processing_system7_0_FCLK_CLK0 [get_bd_ports FCLK_CLK0] [get_bd_pins processing_system7_0/FCLK_CLK0] [get_bd_pins processing_system7_0/S_AXI_GP0_ACLK]
   connect_bd_net -net processing_system7_0_FCLK_CLK1 [get_bd_ports FCLK_CLK1] [get_bd_pins processing_system7_0/FCLK_CLK1]
-  connect_bd_net -net processing_system7_0_FCLK_RESET0_N [get_bd_ports FCLK_RESET0_N] [get_bd_pins processing_system7_0/FCLK_RESET0_N]
+  connect_bd_net -net proc_sys_reset_0_peripheral_aresetn [get_bd_ports RESETN] [get_bd_pins proc_sys_reset_0/peripheral_aresetn]
 
   # Create address segments
   create_bd_addr_seg -range 0x20000000 -offset 0x0 [get_bd_addr_spaces S_AXI_GP0] [get_bd_addr_segs processing_system7_0/S_AXI_GP0/GP0_DDR_LOWOCM] SEG_processing_system7_0_GP0_DDR_LOWOCM
