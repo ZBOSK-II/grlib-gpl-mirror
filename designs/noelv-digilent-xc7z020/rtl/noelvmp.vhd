@@ -68,7 +68,7 @@ entity noelvmp is
     -- LEDs. 0: off, 1: on
     led                : out   std_logic_vector(7 downto 0);
     -- Buttons 0: not pressed, 1: pressed
-    btn                : in    std_logic_vector(3 downto 0);
+    btn                : in    std_logic_vector(4 downto 0);
     -- Switches
     sw                 : in    std_logic_vector(3 downto 0);
     -- PMOD-JB
@@ -200,6 +200,8 @@ architecture rtl of noelvmp is
   -- Clock & Reset
   signal rstn           : std_ulogic;
   signal resetn         : std_ulogic;
+  signal reset_button   : std_ulogic;
+
   signal lock           : std_logic;
   signal clkm           : std_ulogic
   -- pragma translate_off 
@@ -295,6 +297,15 @@ architecture rtl of noelvmp is
   signal S_AXI_GP0_wstrb    : std_logic_vector(3 downto 0);
   signal S_AXI_GP0_wvalid   : std_logic;
 
+ -- Reset control signals
+  signal isolate_req    : std_logic;  -- Isolation request
+  signal axi_quiescent  : std_logic;  -- AXI bus is drained
+  signal noelv_rstn     : std_logic;  -- Gated reset to NOELV
+
+  -- Gated AXI signals - gate sits between NOELV and PS conversion
+  signal mem_aximo_g : axi_mosi_type;  -- From gate to PS conversion
+  signal mem_aximi_g : axi_somi_type;  -- From PS conversion to gate
+
 begin
 
   ----------------------------------------------------------------------
@@ -304,6 +315,55 @@ begin
   gnd         <= '0';
   lock        <= '1';
 
+  rst_pad : inpad generic map (tech => padtech)
+    port map (btn(4), reset_button);
+
+  p_reset_seq : process(clkm)
+  begin
+    if rising_edge(clkm) then
+      if resetn = '0' then
+        isolate_req <= '0';
+        noelv_rstn  <= '1';
+      else
+        isolate_req <= '0';
+
+        if reset_button = '1' then
+          isolate_req <= '1';
+
+          if axi_quiescent = '1' then
+            noelv_rstn <= '0';
+          end if;
+        else
+          noelv_rstn <= '1';
+        end if;
+      end if;
+    end if;
+  end process p_reset_seq;
+
+  ----------------------------------------------------------------------
+  -- AXI Reset Gate - correct placement
+  ----------------------------------------------------------------------
+  axi_reset_gate_inst : entity work.axi_reset_gate
+    generic map (
+      addr_width  => 32,
+      data_width  => 32,
+      max_pending => 16
+    )
+    port map (
+      clk         => clkm,
+      rstn        => resetn,
+      
+      isolate_i   => isolate_req,      -- Request isolation
+      quiescent_o => axi_quiescent,    -- AXI drained indication
+      
+      -- Slave side: connect to NOELV
+      s_axi_mosi_i => mem_aximo,       -- From NOELV (NOELV is master)
+      s_axi_somi_o => mem_aximi,       -- To NOELV
+      
+      -- Master side: connect to PS conversion logic
+      m_axi_mosi_o => mem_aximo_g,     -- To PS conversion
+      m_axi_somi_i => mem_aximi_g      -- From PS conversion
+    );
   ----------------------------------------------------------------------
   ---  Zedboard PS -----------------------------------------------------
   ----------------------------------------------------------------------
@@ -326,7 +386,7 @@ begin
       DDR_dqs_p                     => ddr3_dqs_p,
       DDR_dqs_n                     => ddr3_dqs_n,
       FCLK_CLK0                     => clkm,
-      RESETN                         => resetn,
+      RESETN                        => resetn,
       COUNTER_EN                    => counter_en,
       COUNTER_RSTN                  => counter_rstn,
       FIXED_IO_mio                  => ps_mio,
@@ -377,48 +437,48 @@ begin
   
   -- Connect NOEL-V AXI MEM to Zynq PS S AXI GP0
 
-  S_AXI_GP0_araddr    <= "0001"&mem_aximo.ar.addr(27 downto 0);
-  S_AXI_GP0_arburst   <= mem_aximo.ar.burst;
-  S_AXI_GP0_arcache   <= mem_aximo.ar.cache;
-  S_AXI_GP0_arid      <= "00" & mem_aximo.ar.id;
-  S_AXI_GP0_arlen     <= mem_aximo.ar.len;
-  S_AXI_GP0_arlock    <= mem_aximo.ar.lock;
-  S_AXI_GP0_arprot    <= mem_aximo.ar.prot;
+  S_AXI_GP0_araddr    <= "0001"&mem_aximo_g.ar.addr(27 downto 0);
+  S_AXI_GP0_arburst   <= mem_aximo_g.ar.burst;
+  S_AXI_GP0_arcache   <= mem_aximo_g.ar.cache;
+  S_AXI_GP0_arid      <= "00" & mem_aximo_g.ar.id;
+  S_AXI_GP0_arlen     <= mem_aximo_g.ar.len;
+  S_AXI_GP0_arlock    <= mem_aximo_g.ar.lock;
+  S_AXI_GP0_arprot    <= mem_aximo_g.ar.prot;
   S_AXI_GP0_arqos     <= (others=>'0');
-  S_AXI_GP0_arsize    <= mem_aximo.ar.size;
-  S_AXI_GP0_arvalid   <= mem_aximo.ar.valid;
-  mem_aximi.ar.ready  <= S_AXI_GP0_arready;
+  S_AXI_GP0_arsize    <= mem_aximo_g.ar.size;
+  S_AXI_GP0_arvalid   <= mem_aximo_g.ar.valid;
+  mem_aximi_g.ar.ready  <= S_AXI_GP0_arready;
 
-  S_AXI_GP0_awaddr    <= "0001"&mem_aximo.aw.addr(27 downto 0);
-  S_AXI_GP0_awburst   <= mem_aximo.aw.burst;
-  S_AXI_GP0_awcache   <= mem_aximo.aw.cache;
-  S_AXI_GP0_awid      <= "00" & mem_aximo.aw.id;
-  S_AXI_GP0_awlen     <= mem_aximo.aw.len;
-  S_AXI_GP0_awlock    <= mem_aximo.aw.lock;
-  S_AXI_GP0_awprot    <= mem_aximo.aw.prot;
+  S_AXI_GP0_awaddr    <= "0001"&mem_aximo_g.aw.addr(27 downto 0);
+  S_AXI_GP0_awburst   <= mem_aximo_g.aw.burst;
+  S_AXI_GP0_awcache   <= mem_aximo_g.aw.cache;
+  S_AXI_GP0_awid      <= "00" & mem_aximo_g.aw.id;
+  S_AXI_GP0_awlen     <= mem_aximo_g.aw.len;
+  S_AXI_GP0_awlock    <= mem_aximo_g.aw.lock;
+  S_AXI_GP0_awprot    <= mem_aximo_g.aw.prot;
   S_AXI_GP0_awqos     <= (others => '0');
-  S_AXI_GP0_awsize    <= mem_aximo.aw.size;
-  S_AXI_GP0_awvalid   <= mem_aximo.aw.valid;
-  mem_aximi.aw.ready  <=  S_AXI_GP0_awready;
+  S_AXI_GP0_awsize    <= mem_aximo_g.aw.size;
+  S_AXI_GP0_awvalid   <= mem_aximo_g.aw.valid;
+  mem_aximi_g.aw.ready  <=  S_AXI_GP0_awready;
 
-  mem_aximi.b.id    <= S_AXI_GP0_bid(3 downto 0);                   
-  S_AXI_GP0_bready  <= mem_aximo.b.ready;
-  mem_aximi.b.resp  <=  S_AXI_GP0_bresp;
-  mem_aximi.b.valid <=  S_AXI_GP0_bvalid;
+  mem_aximi_g.b.id    <= S_AXI_GP0_bid(3 downto 0);                   
+  S_AXI_GP0_bready  <= mem_aximo_g.b.ready;
+  mem_aximi_g.b.resp  <=  S_AXI_GP0_bresp;
+  mem_aximi_g.b.valid <=  S_AXI_GP0_bvalid;
   
-  mem_aximi.r.data  <= S_AXI_GP0_rdata;
-  mem_aximi.r.id    <= S_AXI_GP0_rid(3 downto 0);
-  mem_aximi.r.last  <= S_AXI_GP0_rlast;
-  S_AXI_GP0_rready  <= mem_aximo.r.ready;
-  mem_aximi.r.resp  <= S_AXI_GP0_rresp;
-  mem_aximi.r.valid <= S_AXI_GP0_rvalid;
+  mem_aximi_g.r.data  <= S_AXI_GP0_rdata;
+  mem_aximi_g.r.id    <= S_AXI_GP0_rid(3 downto 0);
+  mem_aximi_g.r.last  <= S_AXI_GP0_rlast;
+  S_AXI_GP0_rready  <= mem_aximo_g.r.ready;
+  mem_aximi_g.r.resp  <= S_AXI_GP0_rresp;
+  mem_aximi_g.r.valid <= S_AXI_GP0_rvalid;
 
-  S_AXI_GP0_wdata   <= mem_aximo.w.data;
-  S_AXI_GP0_wlast   <= mem_aximo.w.last;
-  mem_aximi.w.ready <= S_AXI_GP0_wready;
-  S_AXI_GP0_wstrb   <= mem_aximo.w.strb;
-  S_AXI_GP0_wvalid  <= mem_aximo.w.valid;
-  S_AXI_GP0_wid     <= "00" & mem_aximo.w.id;
+  S_AXI_GP0_wdata   <= mem_aximo_g.w.data;
+  S_AXI_GP0_wlast   <= mem_aximo_g.w.last;
+  mem_aximi_g.w.ready <= S_AXI_GP0_wready;
+  S_AXI_GP0_wstrb   <= mem_aximo_g.w.strb;
+  S_AXI_GP0_wvalid  <= mem_aximo_g.w.valid;
+  S_AXI_GP0_wid     <= "00" & mem_aximo_g.w.id;
 
   ----------------------------------------------------------------------
   ---  NOEL-V SUBSYSTEM ------------------------------------------------
@@ -436,7 +496,7 @@ begin
   port map (
     -- Clock & reset
     clkm        => clkm, 
-    resetn      => resetn,
+    resetn      => noelv_rstn,
     lock        => lock,
     rstno       => rstn,
     -- misc
