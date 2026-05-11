@@ -322,18 +322,30 @@ begin
                 
                 m_mosi_nxt.r.ready   <= s_axi_mosi_i.r.ready;
                 
-            when ST_ISOLATING | ST_QUIESCENT =>
-                -- Deassert all valid signals to block new transactions
+            when ST_ISOLATING =>
+                -- Block new address requests; pass through W/B/R channels so
+                -- in-flight write data can reach the PS and generate B
+                -- responses, and in-flight read responses drain back to NOEL-V.
+                -- Without passing W, an accepted AW whose data beats are still
+                -- in flight will stall the PS permanently: it holds the write
+                -- open, never issues a B response, and wr_pending never reaches
+                -- zero.
+                m_mosi_nxt.aw.valid <= '0';
+                m_mosi_nxt.ar.valid <= '0';
+                m_mosi_nxt.w.data   <= s_axi_mosi_i.w.data;
+                m_mosi_nxt.w.strb   <= s_axi_mosi_i.w.strb;
+                m_mosi_nxt.w.last   <= s_axi_mosi_i.w.last;
+                m_mosi_nxt.w.valid  <= s_axi_mosi_i.w.valid;
+                m_mosi_nxt.b.ready  <= s_axi_mosi_i.b.ready;
+                m_mosi_nxt.r.ready  <= s_axi_mosi_i.r.ready;
+
+            when ST_QUIESCENT =>
+                -- All transactions fully drained; block everything.
                 m_mosi_nxt.aw.valid <= '0';
                 m_mosi_nxt.w.valid  <= '0';
                 m_mosi_nxt.ar.valid <= '0';
-                
-                -- Pass through NOEL-V's ready signals so in-flight responses
-                -- drain back to NOEL-V normally.  Do NOT force ready='1' here:
-                -- swallowing responses invisibly to NOEL-V leaves the PS AXI
-                -- slave with retired IDs that NOEL-V never acknowledged, which
-                -- corrupts the PS interconnect and causes PS-side DMA errors
-                -- (e.g. SDHCI ADMA faults) after the NOEL-V reset cycle.
+                -- Do NOT force ready='1' here: swallowing responses invisibly
+                -- to NOEL-V corrupts the PS interconnect (PS-side DMA errors).
                 m_mosi_nxt.b.ready  <= s_axi_mosi_i.b.ready;
                 m_mosi_nxt.r.ready  <= s_axi_mosi_i.r.ready;
                 
@@ -393,11 +405,11 @@ begin
                 s_somi_c.ar.ready <= m_axi_somi_i.ar.ready;
                 
             when ST_ISOLATING =>
-                -- Block new transaction requests but let in-flight responses
-                -- drain back to NOEL-V.  The counters track these completions;
-                -- only once they reach zero do we move to ST_QUIESCENT.
+                -- Block new address-channel handshakes; pass w.ready through
+                -- so in-flight write data beats can complete to the PS and
+                -- generate B responses (which drain wr_pending).
                 s_somi_c.aw.ready <= '0';
-                s_somi_c.w.ready  <= '0';
+                s_somi_c.w.ready  <= m_axi_somi_i.w.ready;
                 s_somi_c.ar.ready <= '0';
 
             when ST_QUIESCENT =>
