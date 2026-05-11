@@ -328,9 +328,14 @@ begin
                 m_mosi_nxt.w.valid  <= '0';
                 m_mosi_nxt.ar.valid <= '0';
                 
-                -- Assert ready to drain any remaining responses
-                m_mosi_nxt.b.ready  <= '1';  -- Accept all write responses
-                m_mosi_nxt.r.ready  <= '1';  -- Accept all read data
+                -- Pass through NOEL-V's ready signals so in-flight responses
+                -- drain back to NOEL-V normally.  Do NOT force ready='1' here:
+                -- swallowing responses invisibly to NOEL-V leaves the PS AXI
+                -- slave with retired IDs that NOEL-V never acknowledged, which
+                -- corrupts the PS interconnect and causes PS-side DMA errors
+                -- (e.g. SDHCI ADMA faults) after the NOEL-V reset cycle.
+                m_mosi_nxt.b.ready  <= s_axi_mosi_i.b.ready;
+                m_mosi_nxt.r.ready  <= s_axi_mosi_i.r.ready;
                 
             when others =>
                 null;
@@ -369,7 +374,7 @@ begin
         s_somi_c.w.ready  <= '0';
         s_somi_c.ar.ready <= '0';
         
-        -- Always passthrough valid/data signals from master
+        -- Default: pass through response channel data/valid from master side
         s_somi_c.b.id      <= m_axi_somi_i.b.id;
         s_somi_c.b.resp    <= m_axi_somi_i.b.resp;
         s_somi_c.b.valid   <= m_axi_somi_i.b.valid;
@@ -387,12 +392,23 @@ begin
                 s_somi_c.w.ready  <= m_axi_somi_i.w.ready;
                 s_somi_c.ar.ready <= m_axi_somi_i.ar.ready;
                 
-            when ST_ISOLATING | ST_QUIESCENT =>
-                -- Block all new transaction requests
+            when ST_ISOLATING =>
+                -- Block new transaction requests but let in-flight responses
+                -- drain back to NOEL-V.  The counters track these completions;
+                -- only once they reach zero do we move to ST_QUIESCENT.
                 s_somi_c.aw.ready <= '0';
                 s_somi_c.w.ready  <= '0';
                 s_somi_c.ar.ready <= '0';
-                
+
+            when ST_QUIESCENT =>
+                -- All transactions fully drained.  Gate response valids to
+                -- zero so NOEL-V sees a clean bus while held in reset.
+                s_somi_c.aw.ready <= '0';
+                s_somi_c.w.ready  <= '0';
+                s_somi_c.ar.ready <= '0';
+                s_somi_c.b.valid  <= '0';
+                s_somi_c.r.valid  <= '0';
+
             when others =>
                 null;
         end case;
