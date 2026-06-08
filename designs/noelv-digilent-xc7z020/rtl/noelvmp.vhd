@@ -129,8 +129,6 @@ architecture rtl of noelvmp is
     DDR_we_n : inout STD_LOGIC;
     FCLK_CLK0 : out STD_LOGIC;
     FCLK_CLK1 : out STD_LOGIC;
-    COUNTER_EN : in STD_LOGIC;
-    COUNTER_RSTN : in STD_LOGIC;
     RESETN : out STD_LOGIC;
     FIXED_IO_ddr_vrn : inout STD_LOGIC;
     FIXED_IO_ddr_vrp : inout STD_LOGIC;
@@ -322,9 +320,7 @@ begin
       DDR_dqs_p                     => ddr3_dqs_p,
       DDR_dqs_n                     => ddr3_dqs_n,
       FCLK_CLK0                     => clkm,
-      RESETN                         => resetn,
-      COUNTER_EN                    => counter_en,
-      COUNTER_RSTN                  => counter_rstn,
+      RESETN                        => resetn,
       FIXED_IO_mio                  => ps_mio,
       FIXED_IO_ps_srstb             => ps_srstb,
       FIXED_IO_ps_clk               => ps_clk,
