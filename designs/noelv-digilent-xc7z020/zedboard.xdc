@@ -79,8 +79,52 @@
 # ----------------------------------------------------------------------------
 # Clock Source - Bank 13
 # ---------------------------------------------------------------------------- 
-#set_property PACKAGE_PIN Y9 [get_ports {CLK}];  # "GCLK"
+#set_property PACKAGE_PIN Y9 [get_ports {CLK100MHZ}];  # "GCLK"
 
+create_clock -add -name sys_clk_pin -period 10.00 -waveform {0 5} [get_ports { CLK100MHZ }];
+create_clock -period 100.000 -name ahbjtaggen0.ahbjtag0/tap0/ac7v.u0/lltck -waveform {0.000 50.000} [get_pins ahbjtaggen0.ahbjtag0/tap0/ac7v.u0/u0/TCK]
+create_clock -period 20.000 -name eth_refclk -waveform {0.000 10.000} [get_ports eth_refclk]
+set_clock_groups -asynchronous -group [get_clocks clkm_clockers] -group [get_clocks ahbjtaggen0.ahbjtag0/tap0/ac7v.u0/lltck]
+set_clock_groups -asynchronous -group [get_clocks eth_refclk] -group [get_clocks clkm_clockers]
+set_clock_groups -asynchronous -group [get_clocks clkm_clockers] -group [get_clocks eth_refclk]
+set_clock_groups -asynchronous -group [get_clocks clkm_clockers] -group [get_clocks clk_pll_i]
+set_clock_groups -asynchronous -group [get_clocks clk_pll_i] -group [get_clocks clkm_clockers]
+set_clock_groups -asynchronous -group [get_clocks eth_refclk] -group [get_clocks clk_pll_i]
+set_clock_groups -asynchronous -group [get_clocks clk_pll_i] -group [get_clocks eth_refclk]
+set_property CLOCK_DEDICATED_ROUTE FALSE [get_nets -hierarchical -filter {NAME =~ *eth_refclk* || NAME =~ *rmii_clk*}]
+set_clock_groups -asynchronous -group [get_clocks clk_pll_i] -group [get_clocks ahbjtaggen0.ahbjtag0/tap0/ac7v.u0/lltck]
+
+set_false_path -from [get_clocks ahbjtaggen0.ahbjtag0/tap0/ac7v.u0/lltck] -to [get_clocks clkm_clockers]
+
+# ETH CDC
+# set_property ASYNC_REG true [get_cells {ahbjtaggen0.ahbjtag0/newcom.jtagcom0/tnr1_reg[done_sync1]}]
+# set_property ASYNC_REG true [get_cells {ahbjtaggen0.ahbjtag0/newcom.jtagcom0/tpr1_reg[done_sync]}]
+# set_property ASYNC_REG true [get_cells {eth0.e1/m100.u0/ethc0/r_reg[rxstart][0]}]
+# set_property ASYNC_REG true [get_cells {eth0.e1/m100.u0/ethc0/r_reg[rxstart][1]}]
+# set_property ASYNC_REG true [get_cells {eth0.e1/m100.u0/ethc0/r_reg[rxwrite][0]}]
+# set_property ASYNC_REG true [get_cells {eth0.e1/m100.u0/ethc0/r_reg[rxwrite][1]}]
+# set_property ASYNC_REG true [get_cells {eth0.e1/m100.u0/ethc0/r_reg[rxdone][0]}]
+# set_property ASYNC_REG true [get_cells {eth0.e1/m100.u0/ethc0/r_reg[rxdone][1]}]
+# set_property ASYNC_REG true [get_cells {eth0.e1/m100.u0/ethc0/r_reg[txread][0]}]
+# set_property ASYNC_REG true [get_cells {eth0.e1/m100.u0/ethc0/r_reg[txread][1]}]
+# set_property ASYNC_REG true [get_cells {eth0.e1/m100.u0/ethc0/r_reg[txrestart][0]}]
+# set_property ASYNC_REG true [get_cells {eth0.e1/m100.u0/ethc0/r_reg[txrestart][1]}]
+# set_property ASYNC_REG true [get_cells {eth0.e1/m100.u0/ethc0/r_reg[txdone][0]}]
+# set_property ASYNC_REG true [get_cells {eth0.e1/m100.u0/ethc0/r_reg[txdone][1]}]
+# set_property ASYNC_REG true [get_cells {eth0.e1/m100.u0/ethc0/rx_rmii0.rx0/gmiimode0.r_reg[write_ack][0]}]
+# set_property ASYNC_REG true [get_cells {eth0.e1/m100.u0/ethc0/rx_rmii0.rx0/gmiimode0.r_reg[write_ack][1]}]
+# set_property ASYNC_REG true [get_cells {eth0.e1/m100.u0/ethc0/rx_rmii0.rx0/gmiimode0.r_reg[done_ack][0]}]
+# set_property ASYNC_REG true [get_cells {eth0.e1/m100.u0/ethc0/rx_rmii0.rx0/gmiimode0.r_reg[done_ack][1]}]
+# set_property ASYNC_REG true [get_cells {eth0.e1/m100.u0/ethc0/rx_rmii0.rx0/rx_rst/r_reg[0]}]
+# set_property ASYNC_REG true [get_cells {eth0.e1/m100.u0/ethc0/rx_rmii0.rx0/rx_rst/r_reg[2]}]
+# set_property ASYNC_REG true [get_cells {eth0.e1/m100.u0/ethc0/tx_rmii0.tx0/gmiimode0.r_reg[fullduplex][0]}]
+# set_property ASYNC_REG true [get_cells {eth0.e1/m100.u0/ethc0/tx_rmii0.tx0/gmiimode0.r_reg[fullduplex][1]}]
+# set_property ASYNC_REG true [get_cells {eth0.e1/m100.u0/ethc0/tx_rmii0.tx0/tx_rst/r_reg[0]}]
+# set_property ASYNC_REG true [get_cells {eth0.e1/m100.u0/ethc0/tx_rmii0.tx0/tx_rst/r_reg[2]}]
+# set_property ASYNC_REG true [get_cells {eth0.e1/m100.u0/ethc0/tx_rmii0.tx0/gmiimode0.r_reg[start][0]}]
+# set_property ASYNC_REG true [get_cells {eth0.e1/m100.u0/ethc0/tx_rmii0.tx0/gmiimode0.r_reg[start][1]}]
+# set_property ASYNC_REG true [get_cells {eth0.e1/m100.u0/ethc0/tx_rmii0.tx0/gmiimode0.r_reg[read_ack][0]}]
+# set_property ASYNC_REG true [get_cells {eth0.e1/m100.u0/ethc0/tx_rmii0.tx0/gmiimode0.r_reg[read_ack][1]}]
 ######=========================
 
 # ----------------------------------------------------------------------------
@@ -113,8 +157,10 @@ set_property PACKAGE_PIN V8  [get_ports {pmod_jb[7]}];  # "JB10"
 # ---------------------------------------------------------------------------- 
 set_property PACKAGE_PIN AB6 [get_ports {uart_rxd_out}];  # "JC1_N"
 set_property PACKAGE_PIN AB7 [get_ports {uart_txd_in}];  # "JC1_P"
-#set_property PACKAGE_PIN AA4 [get_ports {JC2_N}];  # "JC2_N"
-#set_property PACKAGE_PIN Y4  [get_ports {JC2_P}];  # "JC2_P"
+set_property PACKAGE_PIN AA4 [get_ports {eth_rstn}];  # "JC2_N"
+set_property PACKAGE_PIN Y4  [get_ports {eth_mdio}];  # "JC2_P"
+set_property IOSTANDARD LVCMOS33 [get_ports {eth_rstn}]
+set_property IOSTANDARD LVCMOS33 [get_ports {eth_mdio}]
 #set_property PACKAGE_PIN T6  [get_ports {JC3_N}];  # "JC3_N"
 #set_property PACKAGE_PIN R6  [get_ports {JC3_P}];  # "JC3_P"
 #set_property PACKAGE_PIN U4  [get_ports {JC4_N}];  # "JC4_N"
@@ -123,14 +169,22 @@ set_property PACKAGE_PIN AB7 [get_ports {uart_txd_in}];  # "JC1_P"
 # ----------------------------------------------------------------------------
 # JD Pmod - Bank 13
 # ---------------------------------------------------------------------------- 
-#set_property PACKAGE_PIN W7 [get_ports {JD1_N}];  # "JD1_N"
-#set_property PACKAGE_PIN V7 [get_ports {JD1_P}];  # "JD1_P"
-#set_property PACKAGE_PIN V4 [get_ports {JD2_N}];  # "JD2_N"
-#set_property PACKAGE_PIN V5 [get_ports {JD2_P}];  # "JD2_P"
-#set_property PACKAGE_PIN W5 [get_ports {JD3_N}];  # "JD3_N"
-#set_property PACKAGE_PIN W6 [get_ports {JD3_P}];  # "JD3_P"
-#set_property PACKAGE_PIN U5 [get_ports {JD4_N}];  # "JD4_N"
-#set_property PACKAGE_PIN U6 [get_ports {JD4_P}];  # "JD4_P"
+set_property PACKAGE_PIN W7 [get_ports {eth_txd[1]}];   # "JD1_N"
+set_property PACKAGE_PIN V7 [get_ports {eth_txd[0]}];   # "JD1_P"
+set_property PACKAGE_PIN V4 [get_ports {eth_mdc}];      # "JD2_N"
+set_property PACKAGE_PIN V5 [get_ports {eth_tx_en}];    # "JD2_P"
+set_property PACKAGE_PIN W5 [get_ports {eth_rxd[1]}];   # "JD3_N"
+set_property PACKAGE_PIN W6 [get_ports {eth_rxd[0]}];   # "JD3_P"
+set_property PACKAGE_PIN U5 [get_ports {eth_refclk}];   # "JD4_N"
+set_property PACKAGE_PIN U6 [get_ports {eth_crs_dv}];   # "JD4_P"
+set_property IOSTANDARD LVCMOS33 [get_ports {eth_txd[0]}]
+set_property IOSTANDARD LVCMOS33 [get_ports {eth_txd[1]}]
+set_property IOSTANDARD LVCMOS33 [get_ports {eth_tx_en}]
+set_property IOSTANDARD LVCMOS33 [get_ports {eth_mdc}]
+set_property IOSTANDARD LVCMOS33 [get_ports {eth_rxd[0]}]
+set_property IOSTANDARD LVCMOS33 [get_ports {eth_rxd[1]}]
+set_property IOSTANDARD LVCMOS33 [get_ports {eth_crs_dv}]
+set_property IOSTANDARD LVCMOS33 [get_ports {eth_refclk}]
 
 # ----------------------------------------------------------------------------
 # OLED Display - Bank 13

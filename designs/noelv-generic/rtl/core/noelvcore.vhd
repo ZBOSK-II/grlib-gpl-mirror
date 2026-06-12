@@ -761,7 +761,7 @@ begin
         hindex => GRETH_HMINDEX, ehindex => GRETH_DM_HMINDEX,
         pindex => GRETH_PINDEX, paddr => GRETH_PADDR, pmask => GRETH_PMASK, pirq => GRETH_PIRQ,
         memtech => memtech,
-        mdcscaler => CPU_FREQ/1000, rmii => 0, enable_mdio => 1, fifosize => CFG_ETH_FIFO,
+        mdcscaler => CPU_FREQ/1000, rmii => 1, enable_mdio => 1, fifosize => CFG_ETH_FIFO,
         nsync => 2, edcl => CFG_DSU_ETH, edclbufsz => CFG_ETH_BUF, phyrstadr => CFG_ETH_PHY_ADDR,
         macaddrh => CFG_ETH_ENM, macaddrl => CFG_LOCAL_ETH_ENL, enable_mdint => 1,
         ipaddrh => CFG_ETH_IPM, ipaddrl => CFG_LOCAL_ETH_IPL,

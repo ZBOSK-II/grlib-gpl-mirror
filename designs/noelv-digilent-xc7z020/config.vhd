@@ -28,7 +28,7 @@ package config is
   constant CFG_NCPU : integer := (1);
   constant CFG_CFG : integer := (3)*256 + (1)*128 + (0)*2 + (0);
   constant CFG_NODBUS : integer := 0;
-  constant CFG_DISAS : integer := 3*1;
+  constant CFG_DISAS : integer := 0;
 -- Interrupts
   constant CFG_APLIC_NDOM : integer := 4;
   constant CFG_NEIID : integer := 63;
@@ -50,7 +50,7 @@ package config is
 -- AMBA settings
   constant CFG_DEFMST : integer := (0);
   constant CFG_RROBIN : integer := 1;
-  constant CFG_SPLIT : integer := 1;
+  constant CFG_SPLIT : integer := 0;
   constant CFG_FPNPEN : integer := 1;
   constant CFG_AHBIO : integer := 16#FFF#;
   constant CFG_APBADDR : integer := 16#FC0#;
@@ -103,7 +103,7 @@ package config is
 -- Gaisler Ethernet core
   constant CFG_GRETH : integer := 1;
   constant CFG_GRETH1G : integer := 0;
-  constant CFG_ETH_FIFO : integer := 8;
+  constant CFG_ETH_FIFO : integer := 64;
   constant CFG_GRETH_FMC : integer := 0;
   constant CFG_ETH_PHY_ADDR : integer := (1);
 -- GPIO port

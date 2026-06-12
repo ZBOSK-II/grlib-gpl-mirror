@@ -103,7 +103,16 @@ entity noelvmp is
     ddr3_odt          : inout   std_logic;
 
     ddr3_vrn          : inout std_logic;
-    ddr3_vrp          : inout std_logic
+    ddr3_vrp          : inout std_logic;
+
+    eth_refclk  : in    std_ulogic;
+    eth_rxd     : in    std_logic_vector(1 downto 0);
+    eth_crs_dv  : in    std_ulogic;
+    eth_txd     : out   std_logic_vector(1 downto 0);
+    eth_tx_en   : out   std_ulogic;
+    eth_mdc     : out   std_ulogic;
+    eth_mdio    : inout std_logic;
+    eth_rstn    : out   std_ulogic
   );
 end;
 
@@ -129,7 +138,7 @@ architecture rtl of noelvmp is
     DDR_we_n : inout STD_LOGIC;
     FCLK_CLK0 : out STD_LOGIC;
     FCLK_CLK1 : out STD_LOGIC;
-    RESETN : out STD_LOGIC;
+    FCLK_RESET0_N : out STD_LOGIC;
     FIXED_IO_ddr_vrn : inout STD_LOGIC;
     FIXED_IO_ddr_vrp : inout STD_LOGIC;
     FIXED_IO_mio : inout STD_LOGIC_VECTOR ( 53 downto 0 );
@@ -177,7 +186,7 @@ architecture rtl of noelvmp is
     );
   end component;
 
-  constant BOARD_FREQ : integer := 40000;  -- CLK input frequency in KHz
+  constant BOARD_FREQ : integer := 100000;  -- CLK input frequency in KHz
   -- cpu frequency in KHz
   constant CPU_FREQ : integer := BOARD_FREQ * CFG_CLKMUL / CFG_CLKDIV;
 
@@ -320,7 +329,7 @@ begin
       DDR_dqs_p                     => ddr3_dqs_p,
       DDR_dqs_n                     => ddr3_dqs_n,
       FCLK_CLK0                     => clkm,
-      RESETN                        => resetn,
+      FCLK_RESET0_N                 => resetn,
       FIXED_IO_mio                  => ps_mio,
       FIXED_IO_ps_srstb             => ps_srstb,
       FIXED_IO_ps_clk               => ps_clk,
@@ -599,6 +608,57 @@ begin
 
   end generate;
 
+-----------------------------------------------------------------------
+-- Ethernet RMII (GRETH, PMOD-JD + JC2)
+--   eth_refclk  - JD4_N / U5   eth_rxd[0]  - JD3_P / W6
+--   eth_rxd[1]  - JD3_N / W5   eth_crs_dv  - JD4_P / U6
+--   eth_txd[0]  - JD1_P / V7   eth_txd[1]  - JD1_N / W7
+--   eth_tx_en   - JD2_P / V5   eth_mdc     - JD2_N / V4
+--   eth_mdio    - JC2_P / Y4   eth_rstn    - JC2_N / AA4
+-----------------------------------------------------------------------
+  ethpads : if CFG_GRETH /= 0 generate
+    erclk_pad : clkpad generic map (tech => padtech, arch => 1)
+      port map (eth_refclk, ethi.rmii_clk);
+    erxd_pad : inpadv generic map (tech => padtech, width => 2)
+      port map (eth_rxd, ethi.rxd(1 downto 0));
+    ecrs_pad : inpad generic map (tech => padtech)
+      port map (eth_crs_dv, ethi.rx_dv);
+    etxd_pad : outpadv generic map (tech => padtech, width => 2)
+      port map (eth_txd, etho.txd(1 downto 0));
+    etxen_pad : outpad generic map (tech => padtech)
+      port map (eth_tx_en, etho.tx_en);
+    emdc_pad : outpad generic map (tech => padtech)
+      port map (eth_mdc, etho.mdc);
+    emdio_pad : iopad generic map (tech => padtech)
+      port map (eth_mdio, etho.mdio_o, etho.mdio_oe, ethi.mdio_i);
+    erst_pad : outpad generic map (tech => padtech)
+      port map (eth_rstn, etho.reset);
+    ethi.gtx_clk    <= '0';
+    ethi.tx_clk     <= '0';
+    ethi.rx_clk     <= '0';
+    ethi.tx_clk_90  <= '0';
+    ethi.tx_clk_100 <= '0';
+    ethi.tx_clk_50  <= '0';
+    ethi.tx_clk_25  <= '0';
+    ethi.tx_dv      <= '0';
+    ethi.rx_er      <= '0';
+    ethi.rx_col     <= '0';
+    ethi.rx_crs     <= ethi.rx_dv;
+    ethi.rx_en      <= '0';
+    ethi.mdint      <= '0';
+    ethi.phyrstaddr  <= "00001";
+    ethi.edcladdr    <= "0000";
+    ethi.edclsepahb  <= '0';
+    ethi.edcldisable <= '1';
+  end generate ethpads;
+
+  noeth : if CFG_GRETH = 0 generate
+    ethi      <= eth_in_none;
+    eth_txd   <= (others => '0');
+    eth_tx_en <= '0';
+    eth_mdc   <= '0';
+    eth_rstn  <= '0';
+  end generate noeth;
 
 -----------------------------------------------------------------------
 -- RISC-V JTAG
