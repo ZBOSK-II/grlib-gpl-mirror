@@ -14,7 +14,7 @@ package config is
   constant CFG_SCAN : integer := 0;
 -- Clock generator
   constant CFG_CLKTECH : integer := zynq7000;
-  constant CFG_CLKMUL : integer := (14);
+  constant CFG_CLKMUL : integer := (20);
   constant CFG_CLKDIV : integer := (20);
   constant CFG_OCLKDIV : integer := 1;
   constant CFG_OCLKBDIV : integer := 0;

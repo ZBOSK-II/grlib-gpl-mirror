@@ -186,7 +186,7 @@ architecture rtl of noelvmp is
     );
   end component;
 
-  constant BOARD_FREQ : integer := 100000;  -- CLK input frequency in KHz
+  constant BOARD_FREQ : integer := 40000;  -- CLK input frequency in KHz
   -- cpu frequency in KHz
   constant CPU_FREQ : integer := BOARD_FREQ * CFG_CLKMUL / CFG_CLKDIV;
 
