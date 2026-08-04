@@ -6,7 +6,7 @@ puts " Programming ZedBoard with bitstream"
 puts "----------------------------------------------"
 
 set BITFILE "./noelvmp.bit"
-set PS7INIT "./vivado/noelv-zedboard-xc7z020/noelv-zedboard-xc7z020.gen/sources_1/bd/zedboard_ps/ip/zedboard_ps_processing_system7_0_0/ps7_init.tcl"
+set PS7INIT "/home/mivashch/PW/Dyploma/bitstreams/ps7_init_40MHz.tcl"
 
 if {![file exists $BITFILE]} {
     puts "ERROR: Bitstream file '$BITFILE' not found!"

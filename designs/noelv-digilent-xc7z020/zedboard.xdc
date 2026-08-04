@@ -81,20 +81,9 @@
 # ---------------------------------------------------------------------------- 
 #set_property PACKAGE_PIN Y9 [get_ports {CLK100MHZ}];  # "GCLK"
 
-create_clock -add -name sys_clk_pin -period 10.00 -waveform {0 5} [get_ports { CLK100MHZ }];
-create_clock -period 100.000 -name ahbjtaggen0.ahbjtag0/tap0/ac7v.u0/lltck -waveform {0.000 50.000} [get_pins ahbjtaggen0.ahbjtag0/tap0/ac7v.u0/u0/TCK]
 create_clock -period 20.000 -name eth_refclk -waveform {0.000 10.000} [get_ports eth_refclk]
-set_clock_groups -asynchronous -group [get_clocks clkm_clockers] -group [get_clocks ahbjtaggen0.ahbjtag0/tap0/ac7v.u0/lltck]
-set_clock_groups -asynchronous -group [get_clocks eth_refclk] -group [get_clocks clkm_clockers]
-set_clock_groups -asynchronous -group [get_clocks clkm_clockers] -group [get_clocks eth_refclk]
-set_clock_groups -asynchronous -group [get_clocks clkm_clockers] -group [get_clocks clk_pll_i]
-set_clock_groups -asynchronous -group [get_clocks clk_pll_i] -group [get_clocks clkm_clockers]
-set_clock_groups -asynchronous -group [get_clocks eth_refclk] -group [get_clocks clk_pll_i]
-set_clock_groups -asynchronous -group [get_clocks clk_pll_i] -group [get_clocks eth_refclk]
+set_clock_groups -asynchronous -group [get_clocks clk_fpga_0] -group [get_clocks eth_refclk]
 set_property CLOCK_DEDICATED_ROUTE FALSE [get_nets -hierarchical -filter {NAME =~ *eth_refclk* || NAME =~ *rmii_clk*}]
-set_clock_groups -asynchronous -group [get_clocks clk_pll_i] -group [get_clocks ahbjtaggen0.ahbjtag0/tap0/ac7v.u0/lltck]
-
-set_false_path -from [get_clocks ahbjtaggen0.ahbjtag0/tap0/ac7v.u0/lltck] -to [get_clocks clkm_clockers]
 
 # ETH CDC
 # set_property ASYNC_REG true [get_cells {ahbjtaggen0.ahbjtag0/newcom.jtagcom0/tnr1_reg[done_sync1]}]
